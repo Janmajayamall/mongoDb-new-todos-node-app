@@ -8,6 +8,6 @@ if (env === 'development'){
 }else if (env === 'test') {
   process.env.PORT = 3000;
   process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTest';
-}el if (env === 'production'){
+}else if (env === 'production'){
   process.env.MONGODB_URI = 'mongodb://janmajayamall:youaremad18@ds111192.mlab.com:11192/todoapp';
 }
