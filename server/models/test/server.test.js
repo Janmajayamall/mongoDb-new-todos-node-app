@@ -4,25 +4,11 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../../server.js');
 const {Todo} = require('./../todo.js');
+const {Users} = require('./../user.js');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed.js');
 
-const todos = [{
-  _id: new ObjectID(),
-  text: 'First test',
-  complete: true,
-  completeAt: 444
-},
-{
-  _id: new ObjectID(),
-  text: 'Second test',
-  completed: false,
-  completedAt: 222
-}]
-beforeEach((done) => {
-  Todo.remove({}).then(() => {
-    return Todo.insertMany(todos);
-  }).then(()=> done());
-
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
   it('should create a new todo', (done) => {
@@ -189,5 +175,76 @@ describe('PATCH /todos/:id', ()=>{
       })
       .end(done);
   });
+
+  });
+
+
+  describe('GET /users/me', () => {
+    it('should return user if authenticated', (done) => {
+      request(app)
+        .get('/users/me')
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body._id).toBe(users[0]._id.toHexString());
+          expect(res.body.email).toBe(users[0].email);
+        })
+        .end(done);
+    });
+
+    it('should return 401 if not authenticated', (done) => {
+      request(app)
+        .get('/users/me')
+        .expect(401)
+        .expect((res) => {
+          expect(res.body).toEqual({});
+        })
+        .end(done);
+    });
+  });
+
+
+  describe('POST /users', ()=>{
+    it('should creare a user', (done)=>{
+      var email = 'ajaja@gmail.com';
+      var password = '12345678qwerty';
+
+      request(app)
+        .post('/users')
+        .send({email, password})
+        .expect(200)
+        .expect((res)=>{
+          expect(res.headers['x-auth']).toExist();
+          expect(res.body._id).toExist();
+          expect(res.body.email).toBe(email);
+        })
+        .end((err)=>{
+          if(err){
+            return done(err);
+          }
+
+          Users.findOne({email}).then((user)=>{
+            expect(user).toExist();
+            expect(user.password).toNotBe(password);
+            done();
+          });
+        });
+    });
+
+    it('should send 400 when invalid email and password', (done)=>{
+      request(app)
+        .post('/users')
+        .send({email: 'daiuwdn', password: 'dawdwa'})
+        .expect(400)
+        .end(done);
+    });
+
+    it('should send 400 when invalid email and password', (done)=>{
+      request(app)
+        .post('/users')
+        .send({email: 'mala@gh.com', password: 'dawdwa'})
+        .expect(400)
+        .end(done);
+    });
 
   });

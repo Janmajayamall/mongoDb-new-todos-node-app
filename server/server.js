@@ -5,6 +5,7 @@ const _ = require('lodash');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
+var {authenticate} = require('./middleware/authenticate.js');
 var {mongoose} = require('./db/mongoose.js');
 var {Todo} = require('./models/todo.js');
 var {Users} = require('./models/user.js');
@@ -109,6 +110,10 @@ app.post('/users', (req, res)=>{
 
 });
 
+
+app.get('/users/me', authenticate, (req, res)=>{
+  res.send(req.users);
+});
 
 
 app.listen(port, ()=>{
